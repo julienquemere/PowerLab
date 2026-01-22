@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XL2Collection</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Power Platform inspired colors */
+            --bg-light: #f5f5f5;
+            --bg-panel: #ffffff;
+            --bg-input: #fafafa;
+            --border: #e1e1e1;
+            --border-focus: #742774;
+            --text: #323130;
+            --text-muted: #605e5c;
+            --text-light: #a19f9d;
+            
+            /* Power Platform accent colors */
+            --accent-primary: #742774;      /* Power Apps purple */
+            --accent-secondary: #0078d4;    /* Microsoft blue */
+            --accent-green: #107c10;        /* Success green */
+            --accent-orange: #ffaa44;       /* Warning orange */
+            --accent-red: #d13438;          /* Error red */
+            --accent-purple-light: #e8d4e8; /* Light purple bg */
+            
+            --glow: rgba(116, 39, 116, 0.15);
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-light);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #8c4799 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .right-column {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Modal Popup */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow: hidden;
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.3s;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-overlay.open .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--accent-purple-light);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--text);
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: calc(90vh - 140px);
+            overflow-y: auto;
+        }
+
+        /* Header with open button */
+        .header-actions {
+            margin-left: auto;
+        }
+
+        .panel-full-height {
+            display: flex;
+            flex-direction: column;
+            min-height: 600px;
+            max-height: calc(100vh - 150px);
+        }
+
+        .columns-content-wrapper {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .columns-content-wrapper .tab-content.active {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .columns-content-wrapper .table-wrapper {
+            flex: 1;
+            max-height: none;
+        }
+
+        .columns-content-wrapper .table-body-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--accent-purple-light);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent-primary);
+        }
+
+        .panel-title .icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            resize: vertical;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--glow);
+        }
+
+        textarea::placeholder {
+            color: var(--text-light);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #8c4799;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--bg-input);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            background: var(--accent-purple-light);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 24px;
+            padding: 12px 20px;
+            background: var(--accent-purple-light);
+            border-top: 1px solid var(--border);
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .stat-value {
+            font-family: 'Consolas', monospace;
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+
+        /* Table avec header fixe */
+        .table-wrapper {
+            max-height: 400px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-header {
+            flex-shrink: 0;
+            background: var(--bg-panel);
+        }
+
+        .table-body-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .table-body-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .table-body-container::-webkit-scrollbar-track {
+            background: var(--bg-light);
+        }
+
+        .table-body-container::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .table-body-container::-webkit-scrollbar-thumb:hover {
+            background: var(--text-light);
+        }
+
+        .columns-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .columns-table th,
+        .columns-table td {
+            text-align: left;
+            padding: 12px 16px;
+        }
+
+        .columns-table th {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: var(--bg-light);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .columns-table td {
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .columns-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .columns-table tbody tr:hover {
+            background: var(--accent-purple-light);
+        }
+
+        /* Largeurs de colonnes fixes */
+        .col-id { width: 50px; }
+        .col-header { width: 25%; }
+        .col-sample { width: 20%; }
+        .col-checked { width: 90px; }
+        .col-unpivot { width: 80px; }
+        .col-dtype { width: 130px; }
+
+        .col-id-cell {
+            font-family: 'Consolas', monospace;
+            color: var(--text-muted);
+        }
+
+        .col-header-cell {
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .col-sample-cell {
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        input[type="checkbox"] {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            background: var(--bg-panel);
+        }
+
+        input[type="checkbox"]:hover {
+            border-color: var(--accent-primary);
+        }
+
+        input[type="checkbox"]:checked {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        input[type="checkbox"]:indeterminate {
+            background: var(--accent-orange);
+            border-color: var(--accent-orange);
+        }
+
+        input[type="checkbox"]:indeterminate::after {
+            content: '−';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        select {
+            padding: 6px 10px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        select:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .dtype-value { color: var(--accent-green); }
+        .dtype-datevalue { color: var(--accent-secondary); }
+        .dtype-datetime { color: var(--accent-secondary); }
+        .dtype-text { color: var(--accent-primary); }
+
+        .output-code {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 400px;
+            overflow-y: auto;
+            color: var(--text);
+        }
+
+        .output-code::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .output-code::-webkit-scrollbar-track {
+            background: var(--bg-light);
+        }
+
+        .output-code::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: var(--bg-light);
+            border-radius: 8px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .tab:not(.active):hover {
+            color: var(--text);
+            background: var(--bg-panel);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .info-box {
+            padding: 12px 16px;
+            background: var(--accent-purple-light);
+            border: 1px solid rgba(116, 39, 116, 0.2);
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .info-box code {
+            background: rgba(116, 39, 116, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            color: var(--accent-primary);
+        }
+
+        .copy-feedback {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            background: var(--accent-green);
+            color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .copy-feedback.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Champs unpivot */
+        .unpivot-settings {
+            display: flex;
+            gap: 16px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, var(--accent-purple-light) 0%, #f0e6f0 100%);
+            border-top: 1px solid var(--border);
+        }
+
+        .unpivot-settings.hidden {
+            display: none;
+        }
+
+        .unpivot-field {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .unpivot-field label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .unpivot-field input[type="text"] {
+            padding: 6px 10px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--accent-primary);
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            width: 120px;
+            transition: border-color 0.2s;
+        }
+
+        .unpivot-field input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--glow);
+        }
+
+        .unpivot-badge {
+            background: var(--accent-primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">FX</div>
+            <div>
+                <h1>XL2Collecion</h1>
+                <p class="subtitle">Générateur de formules pour import Excel → Collection Power Apps</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openModal()">
+                    <span>📋</span> Importer Excel
+                </button>
+            </div>
+        </header>
+
+        <div class="main-grid">
+            <!-- Left Column: colBootstrap -->
+            <div class="left-column">
+                <div class="panel panel-full-height panel-colbootstrap">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span class="icon">📊</span>
+                            colBootstrap
+                        </div>
+                        <div class="tabs">
+                            <button class="tab active" onclick="switchTab('table')">Table</button>
+                            <button class="tab" onclick="switchTab('json')">JSON</button>
+                        </div>
+                    </div>
+                    <div id="columnsContent" class="columns-content-wrapper">
+                        <div class="tab-content active" id="tab-table">
+                            <div class="empty-state" id="emptyState">
+                                <div class="empty-state-icon">📄</div>
+                                <p>Cliquez sur "Importer Excel" pour commencer</p>
+                            </div>
+                            <div class="table-wrapper" id="tableWrapper" style="display: none;">
+                                <div class="table-header">
+                                    <table class="columns-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="col-id">ID</th>
+                                                <th class="col-header">Header</th>
+                                                <th class="col-sample">Sample</th>
+                                                <th class="col-checked">
+                                                    <div class="checkbox-wrapper" style="justify-content: flex-start; gap: 6px;">
+                                                        <input type="checkbox" id="checkAllChecked" checked onchange="toggleAllChecked(this.checked)">
+                                                        <span>Checked</span>
+                                                    </div>
+                                                </th>
+                                                <th class="col-unpivot">Unpivot</th>
+                                                <th class="col-dtype">DType</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                                <div class="table-body-container">
+                                    <table class="columns-table">
+                                        <tbody id="columnsBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-content" id="tab-json">
+                            <div class="panel-body">
+                                <pre class="output-code" id="jsonOutput">// Importez d'abord des données Excel</pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="unpivot-settings hidden" id="unpivotSettings">
+                        <div class="unpivot-field">
+                            <label>Nom colonne attribut:</label>
+                            <input type="text" id="unpivotAttrName" value="Attribut" oninput="generateFormula()">
+                        </div>
+                        <div class="unpivot-field">
+                            <label>Nom colonne valeur:</label>
+                            <input type="text" id="unpivotValueName" value="Valeur" oninput="generateFormula()">
+                        </div>
+                        <span class="unpivot-badge" id="unpivotCount">0 colonnes</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Formula -->
+            <div class="right-column">
+                <div class="panel panel-formula">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span class="icon">⚡</span>
+                            Formule Power FX Générée
+                        </div>
+                        <button class="btn btn-secondary" id="copyBtn">
+                            <span>📋</span> Copier
+                        </button>
+                    </div>
+                    <div class="panel-body">
+                        <div class="info-box">
+                            Formule complète à coller dans l'événement <code>OnSelect</code> de votre bouton d'import.
+                        </div>
+                        <pre class="output-code" id="formulaOutput">// Importez d'abord des données Excel pour générer la formule</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Popup pour l'import Excel -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="panel-title">
+                    <span class="icon">📋</span>
+                    Entrée Excel (TSV)
+                </div>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="info-box">
+                    Collez le contenu copié depuis Excel (header + quelques lignes de données).
+                    Le séparateur attendu est <code>TAB</code>.
+                </div>
+                <label class="input-label">TextInputExemple</label>
+                <textarea id="inputData" placeholder="Collez ici le contenu Excel (Ctrl+V depuis Excel)..."></textarea>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="analyzeAndClose()">
+                        <span>⚡</span> Analyser et fermer
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearAll()">
+                        <span>🗑️</span> Effacer
+                    </button>
+                </div>
+                <div class="stats-bar" id="statsBar" style="display: none;">
+                    <div class="stat">
+                        <span class="stat-label">cutStart</span>
+                        <span class="stat-value" id="statCutStart">-</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Colonnes</span>
+                        <span class="stat-value" id="statCols">-</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Lignes data</span>
+                        <span class="stat-value" id="statRows">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="copy-feedback" id="copyFeedback">✓ Copié dans le presse-papier</div>
+
+    <script>
+        let colBootstrap = [];
+        let varCutStart = 0;
+        let headerCells = [];
+
+        // Attacher l'événement copier au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('copyBtn').addEventListener('click', copyFormula);
+            
+            // Fermer la modal avec Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+        });
+
+        // Fonctions Modal
+        function openModal() {
+            document.getElementById('modalOverlay').classList.add('open');
+            document.getElementById('inputData').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('open');
+        }
+
+        function closeModalOnOverlay(event) {
+            if (event.target === document.getElementById('modalOverlay')) {
+                closeModal();
+            }
+        }
+
+        function analyzeAndClose() {
+            analyzeData();
+            if (colBootstrap.length > 0) {
+                closeModal();
+            }
+        }
+
+        function normalizeLineEndings(text) {
+            return text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        }
+
+        function parseHeaderWithQuotes(text) {
+            const normalized = normalizeLineEndings(text);
+            let inQuotes = false;
+            let headerEndPos = -1;
+            
+            for (let i = 0; i < normalized.length; i++) {
+                const char = normalized[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === '\n' && !inQuotes) {
+                    headerEndPos = i;
+                    break;
+                }
+            }
+            
+            if (headerEndPos === -1) {
+                return { header: normalized, cutStart: normalized.length };
+            }
+            
+            const headerLine = normalized.substring(0, headerEndPos);
+            const cutStart = headerEndPos + 1;
+            
+            return { header: headerLine, cutStart: cutStart };
+        }
+
+        function parseHeaderCells(headerLine) {
+            const cells = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < headerLine.length; i++) {
+                const char = headerLine[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                    current += char;
+                } else if (char === '\t' && !inQuotes) {
+                    cells.push(cleanCellValue(current));
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            cells.push(cleanCellValue(current));
+            
+            return cells;
+        }
+
+        function cleanCellValue(value) {
+            let v = value.trim();
+            if (v.startsWith('"') && v.endsWith('"')) {
+                v = v.slice(1, -1);
+                v = v.replace(/""/g, '"');
+            }
+            return v;
+        }
+
+        function inferDType(samples) {
+            const validSamples = samples.filter(s => s && s.trim() !== '');
+            if (validSamples.length === 0) return 'Text';
+            
+            let allNumbers = true;
+            let allDates = true;
+            let allDateTimes = true;
+            
+            for (const sample of validSamples) {
+                const s = sample.trim();
+                
+                const numTest = s.replace(',', '.').replace(/\s/g, '');
+                if (isNaN(parseFloat(numTest)) || !isFinite(numTest)) {
+                    allNumbers = false;
+                }
+                
+                const datePatterns = [
+                    /^\d{1,2}\/\d{1,2}\/\d{2,4}$/,
+                    /^\d{4}-\d{2}-\d{2}$/,
+                    /^\d{1,2}-\d{1,2}-\d{2,4}$/,
+                    /^\d{1,2}\.\d{1,2}\.\d{2,4}$/
+                ];
+                const isDateOnly = datePatterns.some(p => p.test(s));
+                if (!isDateOnly) {
+                    allDates = false;
+                }
+                
+                const dateTimePatterns = [
+                    /^\d{1,2}\/\d{1,2}\/\d{2,4}\s+\d{1,2}:\d{2}/,
+                    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/,
+                    /^\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}/
+                ];
+                const isDateTime = dateTimePatterns.some(p => p.test(s));
+                if (!isDateTime && !isDateOnly) {
+                    allDateTimes = false;
+                }
+            }
+            
+            if (allNumbers) return 'Value';
+            if (allDates) return 'DateValue';
+            if (allDateTimes) return 'DateTimeValue';
+            return 'Text';
+        }
+
+        function analyzeData() {
+            const input = document.getElementById('inputData').value;
+            if (!input.trim()) {
+                alert('Veuillez coller des données Excel');
+                return;
+            }
+            
+            const normalized = normalizeLineEndings(input);
+            const { header, cutStart } = parseHeaderWithQuotes(normalized);
+            varCutStart = cutStart;
+            headerCells = parseHeaderCells(header);
+            
+            const body = normalized.substring(cutStart);
+            const dataLines = body.split('\n').filter(line => line.trim() !== '');
+            
+            const samples = headerCells.map(() => []);
+            for (const line of dataLines) {
+                const cells = line.split('\t');
+                for (let i = 0; i < headerCells.length; i++) {
+                    if (cells[i] !== undefined) {
+                        samples[i].push(cells[i]);
+                    }
+                }
+            }
+            
+            colBootstrap = headerCells.map((header, index) => ({
+                id: index + 1,
+                header: header,
+                sample: samples[index][0] || '',
+                checked: true,
+                unpivot: false,
+                dtype: inferDType(samples[index])
+            }));
+            
+            updateStatsBar(dataLines.length);
+            renderColumnsTable();
+            generateFormula();
+        }
+
+        function updateStatsBar(rowCount) {
+            document.getElementById('statsBar').style.display = 'flex';
+            document.getElementById('statCutStart').textContent = varCutStart;
+            document.getElementById('statCols').textContent = headerCells.length;
+            document.getElementById('statRows').textContent = rowCount;
+        }
+
+        function renderColumnsTable() {
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('tableWrapper').style.display = 'flex';
+            
+            const tbody = document.getElementById('columnsBody');
+            tbody.innerHTML = '';
+            
+            for (const col of colBootstrap) {
+                const tr = document.createElement('tr');
+                
+                const dtypeClass = col.dtype === 'Value' ? 'dtype-value' : 
+                                   col.dtype === 'DateValue' ? 'dtype-datevalue' :
+                                   col.dtype === 'DateTimeValue' ? 'dtype-datetime' : 'dtype-text';
+                
+                tr.innerHTML = `
+                    <td class="col-id col-id-cell">${col.id}</td>
+                    <td class="col-header col-header-cell" title="${escapeHtml(col.header)}">${escapeHtml(col.header)}</td>
+                    <td class="col-sample col-sample-cell" title="${escapeHtml(col.sample)}">${escapeHtml(col.sample)}</td>
+                    <td class="col-checked">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" ${col.checked ? 'checked' : ''} 
+                                   onchange="updateColumn(${col.id}, 'checked', this.checked)">
+                        </div>
+                    </td>
+                    <td class="col-unpivot">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" ${col.unpivot ? 'checked' : ''} 
+                                   onchange="updateColumn(${col.id}, 'unpivot', this.checked)">
+                        </div>
+                    </td>
+                    <td class="col-dtype">
+                        <select class="${dtypeClass}" onchange="updateColumn(${col.id}, 'dtype', this.value)">
+                            <option value="Value" ${col.dtype === 'Value' ? 'selected' : ''}>Value</option>
+                            <option value="DateValue" ${col.dtype === 'DateValue' ? 'selected' : ''}>DateValue</option>
+                            <option value="DateTimeValue" ${col.dtype === 'DateTimeValue' ? 'selected' : ''}>DateTimeValue</option>
+                            <option value="Text" ${col.dtype === 'Text' ? 'selected' : ''}>Text</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+            
+            updateJsonOutput();
+            updateUnpivotSettings();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateColumn(id, field, value) {
+            const col = colBootstrap.find(c => c.id === id);
+            if (col) {
+                col[field] = value;
+                updateJsonOutput();
+                generateFormula();
+                
+                if (field === 'dtype') {
+                    renderColumnsTable();
+                }
+                
+                if (field === 'checked') {
+                    updateGlobalCheckboxState();
+                }
+                
+                if (field === 'unpivot') {
+                    updateUnpivotSettings();
+                }
+            }
+        }
+
+        function toggleAllChecked(isChecked) {
+            colBootstrap.forEach(col => col.checked = isChecked);
+            renderColumnsTable();
+            generateFormula();
+        }
+
+        function updateGlobalCheckboxState() {
+            const globalCheckbox = document.getElementById('checkAllChecked');
+            if (!globalCheckbox) return;
+            
+            const allChecked = colBootstrap.every(col => col.checked);
+            const noneChecked = colBootstrap.every(col => !col.checked);
+            
+            globalCheckbox.checked = allChecked;
+            globalCheckbox.indeterminate = !allChecked && !noneChecked;
+        }
+
+        function updateUnpivotSettings() {
+            const unpivotCols = colBootstrap.filter(c => c.unpivot);
+            const settingsDiv = document.getElementById('unpivotSettings');
+            const countBadge = document.getElementById('unpivotCount');
+            
+            if (unpivotCols.length > 0) {
+                settingsDiv.classList.remove('hidden');
+                countBadge.textContent = `${unpivotCols.length} colonne${unpivotCols.length > 1 ? 's' : ''}`;
+            } else {
+                settingsDiv.classList.add('hidden');
+            }
+        }
+
+        function updateJsonOutput() {
+            const json = JSON.stringify(colBootstrap, null, 2);
+            document.getElementById('jsonOutput').textContent = json;
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            document.querySelector(`.tab:nth-child(${tabName === 'table' ? 1 : 2})`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        function normalizeHeaderForFormula(name) {
+            return name
+                .replace(/\r\n/g, ' ')
+                .replace(/\r/g, ' ')
+                .replace(/\n/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function escapeFieldName(name) {
+            const normalized = normalizeHeaderForFormula(name);
+            if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(normalized)) {
+                return normalized;
+            }
+            return `'${normalized.replace(/'/g, "''")}'`;
+        }
+
+        function getValueExpr(dtype, cellIndexExpr) {
+            if (dtype === 'Text') {
+                return `Index(_cells; ${cellIndexExpr}).Value`;
+            } else if (dtype === 'Value') {
+                return `Value(Substitute(Index(_cells; ${cellIndexExpr}).Value; ","; "."))`;
+            } else if (dtype === 'DateValue') {
+                return `DateValue(Index(_cells; ${cellIndexExpr}).Value)`;
+            } else if (dtype === 'DateTimeValue') {
+                return `DateTimeValue(Index(_cells; ${cellIndexExpr}).Value)`;
+            }
+            return `Index(_cells; ${cellIndexExpr}).Value`;
+        }
+
+        function generateFormula() {
+            const checkedCols = colBootstrap.filter(c => c.checked);
+            const unpivotCols = checkedCols.filter(c => c.unpivot);
+            const normalCols = checkedCols.filter(c => !c.unpivot);
+            
+            const hasUnpivot = unpivotCols.length > 0;
+            
+            // Récupérer les noms personnalisés pour attribut/valeur
+            const attrName = document.getElementById('unpivotAttrName')?.value || 'Attribut';
+            const valueName = document.getElementById('unpivotValueName')?.value || 'Valeur';
+            
+            let formula = '';
+            
+            // Commentaire d'en-tête
+            formula += `// ═══════════════════════════════════════════════════════════════\n`;
+            formula += `// Formule générée par Power FX Maker Tool\n`;
+            formula += `// cutStart = ${varCutStart} (longueur du header + 1)\n`;
+            formula += `// Colonnes: ${checkedCols.length} sélectionnées sur ${colBootstrap.length}\n`;
+            if (hasUnpivot) {
+                formula += `// Mode UNPIVOT activé pour: ${unpivotCols.map(c => normalizeHeaderForFormula(c.header)).join(', ')}\n`;
+                formula += `// Colonnes clés: ${normalCols.map(c => normalizeHeaderForFormula(c.header)).join(', ')}\n`;
+            }
+            formula += `// ═══════════════════════════════════════════════════════════════\n\n`;
+            
+            // Variables locales avec With
+            formula += `With(\n`;
+            formula += `    {\n`;
+            formula += `        // Normalisation CR/LF et extraction du body (skip header)\n`;
+            formula += `        _txt: Mid(\n`;
+            formula += `            Substitute(Substitute(TextInputPaste.Text; Char(13) & Char(10); Char(10)); Char(13); Char(10));\n`;
+            formula += `            ${varCutStart}\n`;
+            formula += `        )\n`;
+            formula += `    };\n`;
+            
+            if (!hasUnpivot) {
+                // Mode simple sans unpivot
+                formula += `    // Chargement de colData\n`;
+                formula += `    ClearCollect(\n`;
+                formula += `        colData;\n`;
+                formula += `        ForAll(\n`;
+                formula += `            Filter(Split(_txt; Char(10)); !IsBlank(Value));\n`;
+                formula += `            With(\n`;
+                formula += `                {_cells: Split(Value; Char(9))};\n`;
+                formula += `                {\n`;
+                
+                for (let i = 0; i < checkedCols.length; i++) {
+                    const col = checkedCols[i];
+                    const fieldName = escapeFieldName(col.header);
+                    const valueExpr = getValueExpr(col.dtype, col.id);
+                    const comma = i < checkedCols.length - 1 ? ';' : '';
+                    formula += `                    ${fieldName}: ${valueExpr}${comma}\n`;
+                }
+                
+                formula += `                }\n`;
+                formula += `            )\n`;
+                formula += `        )\n`;
+                formula += `    )\n`;
+                formula += `)`;
+                
+            } else {
+                // Mode avec unpivot - génère des lignes PLATES dans la collection
+                // Pour chaque ligne source, on génère N lignes (N = nombre de colonnes unpivot)
+                
+                formula += `    // Chargement avec UNPIVOT (lignes plates)\n`;
+                formula += `    ClearCollect(\n`;
+                formula += `        colData;\n`;
+                formula += `        Ungroup(\n`;
+                formula += `            ForAll(\n`;
+                formula += `                Filter(Split(_txt; Char(10)); !IsBlank(Value));\n`;
+                formula += `                With(\n`;
+                formula += `                    {_cells: Split(Value; Char(9))};\n`;
+                formula += `                    {\n`;
+                formula += `                        _rows: Table(\n`;
+                
+                // Générer une ligne par colonne unpivot
+                for (let i = 0; i < unpivotCols.length; i++) {
+                    const col = unpivotCols[i];
+                    const normalizedHeader = normalizeHeaderForFormula(col.header);
+                    const valueExpr = getValueExpr(col.dtype, col.id);
+                    const comma = i < unpivotCols.length - 1 ? ';' : '';
+                    
+                    formula += `                            {\n`;
+                    
+                    // Colonnes clés (non-unpivot)
+                    for (const keyCol of normalCols) {
+                        const keyFieldName = escapeFieldName(keyCol.header);
+                        const keyValueExpr = getValueExpr(keyCol.dtype, keyCol.id);
+                        formula += `                                ${keyFieldName}: ${keyValueExpr};\n`;
+                    }
+                    
+                    // Colonnes Attribut et Valeur
+                    const attrFieldName = escapeFieldName(attrName);
+                    const valueFieldName = escapeFieldName(valueName);
+                    formula += `                                ${attrFieldName}: "${normalizedHeader}";\n`;
+                    formula += `                                ${valueFieldName}: ${valueExpr}\n`;
+                    formula += `                            }${comma}\n`;
+                }
+                
+                formula += `                        )\n`;
+                formula += `                    }\n`;
+                formula += `                )\n`;
+                formula += `            );\n`;
+                formula += `            _rows\n`;
+                formula += `        )\n`;
+                formula += `    )\n`;
+                formula += `)`;
+            }
+            
+            document.getElementById('formulaOutput').textContent = formula;
+        }
+
+        function copyFormula() {
+            const formula = document.getElementById('formulaOutput').textContent;
+            
+            // Méthode moderne avec fallback
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(formula).then(function() {
+                    showCopyFeedback();
+                }).catch(function(err) {
+                    fallbackCopy(formula);
+                });
+            } else {
+                fallbackCopy(formula);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            textArea.style.top = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showCopyFeedback();
+            } catch (err) {
+                alert('Erreur lors de la copie. Veuillez sélectionner et copier manuellement.');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showCopyFeedback() {
+            const feedback = document.getElementById('copyFeedback');
+            feedback.classList.add('show');
+            setTimeout(function() {
+                feedback.classList.remove('show');
+            }, 2000);
+        }
+
+        function clearAll() {
+            document.getElementById('inputData').value = '';
+            document.getElementById('statsBar').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('tableWrapper').style.display = 'none';
+            document.getElementById('unpivotSettings').classList.add('hidden');
+            document.getElementById('jsonOutput').textContent = '// Importez d\'abord des données Excel';
+            document.getElementById('formulaOutput').textContent = '// Importez d\'abord des données Excel pour générer la formule';
+            colBootstrap = [];
+            varCutStart = 0;
+            headerCells = [];
+        }
+    </script>
+</body>
+</html>
