@@ -1434,43 +1434,44 @@
             
             if (!hasUnpivot) {
                 // Mode simple sans unpivot
-                formula += `    // ${t.formulaLoadCollection}\n`;
-                formula += `    ClearCollect(\n`;
-                formula += `        colData${ls}\n`;
-                formula += `        ForAll(\n`;
-                formula += `            Filter(Split(_txt${ls} Char(10))${ls} !IsBlank(Value))${ls}\n`;
-                formula += `            With(\n`;
-                formula += `                {_cells: Split(Value${ls} Char(9))}${ls}\n`;
-                formula += `                {\n`;
+                formula += `        // ${t.formulaLoadCollection}\n`;
+                formula += `        ClearCollect(\n`;
+                formula += `            colData${ls}\n`;
+                formula += `            ForAll(\n`;
+                formula += `                Filter(Split(_txt${ls} Char(10))${ls} !IsBlank(Value))${ls}\n`;
+                formula += `                With(\n`;
+                formula += `                    {_cells: Split(Value${ls} Char(9))}${ls}\n`;
+                formula += `                    {\n`;
                 
                 for (let i = 0; i < checkedCols.length; i++) {
                     const col = checkedCols[i];
                     const fieldName = escapeFieldName(col.header);
                     const valueExpr = getValueExpr(col.dtype, col.id, syntax);
                     const separator = i < checkedCols.length - 1 ? ls : '';
-                    formula += `                    ${fieldName}: ${valueExpr}${separator}\n`;
+                    formula += `                        ${fieldName}: ${valueExpr}${separator}\n`;
                 }
                 
-                formula += `                }\n`;
+                formula += `                    }\n`;
+                formula += `                )\n`;
                 formula += `            )\n`;
                 formula += `        )\n`;
-                formula += `    )\n`;
-                formula += `)`;
+                formula += `    )`;  // Ferme le With interne
+                formula += `\n)`;  // Ferme le With global
                 
             } else {
                 // Mode avec unpivot - génère des lignes PLATES dans la collection
                 // Pour chaque ligne source, on génère N lignes (N = nombre de colonnes unpivot)
                 
-                formula += `    // ${t.formulaUnpivotLoad}\n`;
-                formula += `    ClearCollect(\n`;
-                formula += `        colData${ls}\n`;
-                formula += `        Ungroup(\n`;
-                formula += `            ForAll(\n`;
-                formula += `                Filter(Split(_txt${ls} Char(10))${ls} !IsBlank(Value))${ls}\n`;
-                formula += `                With(\n`;
-                formula += `                    {_cells: Split(Value${ls} Char(9))}${ls}\n`;
-                formula += `                    {\n`;
-                formula += `                        _rows: Table(\n`;
+                formula += `        // ${t.formulaUnpivotLoad}\n`;
+                formula += `        ClearCollect(\n`;
+                formula += `            colData${ls}\n`;
+                formula += `            Ungroup(\n`;
+                formula += `                ForAll(\n`;
+                formula += `                    Filter(Split(_txt${ls} Char(10))${ls} !IsBlank(Value))${ls}\n`;
+                formula += `                    With(\n`;
+                formula += `                        {_cells: Split(Value${ls} Char(9))}${ls}\n`;
+                formula += `                        {\n`;
+                formula += `                            _rows: Table(\n`;
                 
                 // Générer une ligne par colonne unpivot
                 for (let i = 0; i < unpivotCols.length; i++) {
@@ -1479,31 +1480,32 @@
                     const valueExpr = getValueExpr(col.dtype, col.id, syntax);
                     const separator = i < unpivotCols.length - 1 ? ls : '';
                     
-                    formula += `                            {\n`;
+                    formula += `                                {\n`;
                     
                     // Colonnes clés (non-unpivot)
                     for (const keyCol of normalCols) {
                         const keyFieldName = escapeFieldName(keyCol.header);
                         const keyValueExpr = getValueExpr(keyCol.dtype, keyCol.id, syntax);
-                        formula += `                                ${keyFieldName}: ${keyValueExpr}${ls}\n`;
+                        formula += `                                    ${keyFieldName}: ${keyValueExpr}${ls}\n`;
                     }
                     
                     // Colonnes Attribut et Valeur
                     const attrFieldName = escapeFieldName(attrName);
                     const valueFieldName = escapeFieldName(valueName);
-                    formula += `                                ${attrFieldName}: "${normalizedHeader}"${ls}\n`;
-                    formula += `                                ${valueFieldName}: ${valueExpr}\n`;
-                    formula += `                            }${separator}\n`;
+                    formula += `                                    ${attrFieldName}: "${normalizedHeader}"${ls}\n`;
+                    formula += `                                    ${valueFieldName}: ${valueExpr}\n`;
+                    formula += `                                }${separator}\n`;
                 }
                 
-                formula += `                        )\n`;
-                formula += `                    }\n`;
-                formula += `                )\n`;
-                formula += `            )${ls}\n`;
-                formula += `            _rows\n`;
+                formula += `                            )\n`;
+                formula += `                        }\n`;
+                formula += `                    )\n`;
+                formula += `                )${ls}\n`;
+                formula += `                _rows\n`;
+                formula += `            )\n`;
                 formula += `        )\n`;
-                formula += `    )\n`;
-                formula += `)`;
+                formula += `    )`;  // Ferme le With interne
+                formula += `\n)`;  // Ferme le With global
             }
             
             document.getElementById('formulaOutput').textContent = formula;
