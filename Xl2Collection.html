@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XL2Collection</title>
+    <title>Xl2Collection - Power FX Formula Generator</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -84,6 +84,46 @@
         .subtitle {
             color: var(--text-muted);
             font-size: 14px;
+        }
+
+        .header-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .language-selector {
+            display: flex;
+            gap: 8px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .language-selector button {
+            padding: 8px 12px;
+            border: 2px solid transparent;
+            background: transparent;
+            border-radius: 6px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0.4;
+            line-height: 1;
+        }
+
+        .language-selector button:hover {
+            opacity: 0.7;
+            transform: scale(1.05);
+        }
+
+        .language-selector button.active {
+            opacity: 1;
+            background: var(--accent-purple-light);
+            border-color: var(--accent-primary);
+            box-shadow: 0 2px 8px rgba(116, 39, 116, 0.2);
         }
 
         .main-grid {
@@ -180,11 +220,6 @@
             padding: 20px;
             max-height: calc(90vh - 140px);
             overflow-y: auto;
-        }
-
-        /* Header with open button */
-        .header-actions {
-            margin-left: auto;
         }
 
         .panel-full-height {
@@ -715,14 +750,18 @@
 <body>
     <div class="container">
         <header>
-            <div class="logo">FX</div>
+            <div class="logo">XL</div>
             <div>
-                <h1>XL2Collecion</h1>
-                <p class="subtitle">Générateur de formules pour import Excel → Collection Power Apps</p>
+                <h1>Xl2Collection</h1>
+                <p class="subtitle" id="headerSubtitle">Power FX Formula Generator for Excel → Power Apps Collection</p>
             </div>
             <div class="header-actions">
+                <div class="language-selector">
+                    <button class="active" onclick="setLanguage('en')" id="langEN" title="English">🇺🇸</button>
+                    <button onclick="setLanguage('fr')" id="langFR" title="Français">🇫🇷</button>
+                </div>
                 <button class="btn btn-primary" onclick="openModal()">
-                    <span>📋</span> Importer Excel
+                    <span>📋</span> <span id="btnImport">Import Excel</span>
                 </button>
             </div>
         </header>
@@ -737,7 +776,7 @@
                             colBootstrap
                         </div>
                         <div class="tabs">
-                            <button class="tab active" onclick="switchTab('table')">Table</button>
+                            <button class="tab active" onclick="switchTab('table')" id="tabTable">Table</button>
                             <button class="tab" onclick="switchTab('json')">JSON</button>
                         </div>
                     </div>
@@ -745,7 +784,7 @@
                         <div class="tab-content active" id="tab-table">
                             <div class="empty-state" id="emptyState">
                                 <div class="empty-state-icon">📄</div>
-                                <p>Cliquez sur "Importer Excel" pour commencer</p>
+                                <p id="emptyStateText">Click "Import Excel" to start</p>
                             </div>
                             <div class="table-wrapper" id="tableWrapper" style="display: none;">
                                 <div class="table-header">
@@ -758,7 +797,7 @@
                                                 <th class="col-checked">
                                                     <div class="checkbox-wrapper" style="justify-content: flex-start; gap: 6px;">
                                                         <input type="checkbox" id="checkAllChecked" checked onchange="toggleAllChecked(this.checked)">
-                                                        <span>Checked</span>
+                                                        <span id="thChecked">Checked</span>
                                                     </div>
                                                 </th>
                                                 <th class="col-unpivot">Unpivot</th>
@@ -776,20 +815,20 @@
                         </div>
                         <div class="tab-content" id="tab-json">
                             <div class="panel-body">
-                                <pre class="output-code" id="jsonOutput">// Importez d'abord des données Excel</pre>
+                                <pre class="output-code" id="jsonOutput">// Import Excel data first</pre>
                             </div>
                         </div>
                     </div>
                     <div class="unpivot-settings hidden" id="unpivotSettings">
                         <div class="unpivot-field">
-                            <label>Nom colonne attribut:</label>
-                            <input type="text" id="unpivotAttrName" value="Attribut" oninput="generateFormula()">
+                            <label id="lblAttrName">Attribute column:</label>
+                            <input type="text" id="unpivotAttrName" value="Attribute" oninput="generateFormula()">
                         </div>
                         <div class="unpivot-field">
-                            <label>Nom colonne valeur:</label>
-                            <input type="text" id="unpivotValueName" value="Valeur" oninput="generateFormula()">
+                            <label id="lblValueName">Value column:</label>
+                            <input type="text" id="unpivotValueName" value="Value" oninput="generateFormula()">
                         </div>
-                        <span class="unpivot-badge" id="unpivotCount">0 colonnes</span>
+                        <span class="unpivot-badge" id="unpivotCount">0 columns</span>
                     </div>
                 </div>
             </div>
@@ -800,17 +839,17 @@
                     <div class="panel-header">
                         <div class="panel-title">
                             <span class="icon">⚡</span>
-                            Formule Power FX Générée
+                            <span id="panelFormulaTitle">Generated Power FX Formula</span>
                         </div>
                         <button class="btn btn-secondary" id="copyBtn">
-                            <span>📋</span> Copier
+                            <span>📋</span> <span id="btnCopy">Copy</span>
                         </button>
                     </div>
                     <div class="panel-body">
                         <div class="info-box">
-                            Formule complète à coller dans l'événement <code>OnSelect</code> de votre bouton d'import.
+                            <span id="infoFormula">Complete formula to paste into the <code>OnSelect</code> event of your import button.</span>
                         </div>
-                        <pre class="output-code" id="formulaOutput">// Importez d'abord des données Excel pour générer la formule</pre>
+                        <pre class="output-code" id="formulaOutput">// Import Excel data first to generate formula</pre>
                     </div>
                 </div>
             </div>
@@ -823,23 +862,22 @@
             <div class="modal-header">
                 <div class="panel-title">
                     <span class="icon">📋</span>
-                    Entrée Excel (TSV)
+                    <span id="modalTitle">Excel Input (TSV)</span>
                 </div>
                 <button class="modal-close" onclick="closeModal()">×</button>
             </div>
             <div class="modal-body">
                 <div class="info-box">
-                    Collez le contenu copié depuis Excel (header + quelques lignes de données).
-                    Le séparateur attendu est <code>TAB</code>.
+                    <span id="modalInfo">Paste content copied from Excel (header + some data rows). Expected separator is <code>TAB</code>.</span>
                 </div>
-                <label class="input-label">TextInputExemple</label>
-                <textarea id="inputData" placeholder="Collez ici le contenu Excel (Ctrl+V depuis Excel)..."></textarea>
+                <label class="input-label" id="lblTextInput">TextInputExample</label>
+                <textarea id="inputData" placeholder="Paste Excel content here (Ctrl+V from Excel)..."></textarea>
                 <div class="btn-group">
                     <button class="btn btn-primary" onclick="analyzeAndClose()">
-                        <span>⚡</span> Analyser et fermer
+                        <span>⚡</span> <span id="btnAnalyze">Analyze and close</span>
                     </button>
                     <button class="btn btn-secondary" onclick="clearAll()">
-                        <span>🗑️</span> Effacer
+                        <span>🗑️</span> <span id="btnClear">Clear</span>
                     </button>
                 </div>
                 <div class="stats-bar" id="statsBar" style="display: none;">
@@ -848,11 +886,11 @@
                         <span class="stat-value" id="statCutStart">-</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-label">Colonnes</span>
+                        <span class="stat-label" id="lblColumns">Columns</span>
                         <span class="stat-value" id="statCols">-</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-label">Lignes data</span>
+                        <span class="stat-label" id="lblDataRows">Data rows</span>
                         <span class="stat-value" id="statRows">-</span>
                     </div>
                 </div>
@@ -860,12 +898,160 @@
         </div>
     </div>
 
-    <div class="copy-feedback" id="copyFeedback">✓ Copié dans le presse-papier</div>
+    <div class="copy-feedback" id="copyFeedback">✓ <span id="feedbackText">Copied to clipboard</span></div>
 
     <script>
+        // Internationalization
+        let currentLanguage = 'en';
+        
+        const translations = {
+            en: {
+                headerSubtitle: 'Power FX Formula Generator for Excel → Power Apps Collection',
+                btnImport: 'Import Excel',
+                tabTable: 'Table',
+                emptyStateText: 'Click "Import Excel" to start',
+                thChecked: 'Checked',
+                lblAttrName: 'Attribute column:',
+                lblValueName: 'Value column:',
+                unpivotAttrDefault: 'Attribute',
+                unpivotValueDefault: 'Value',
+                unpivotCount: (n) => `${n} column${n !== 1 ? 's' : ''}`,
+                panelFormulaTitle: 'Generated Power FX Formula',
+                btnCopy: 'Copy',
+                infoFormula: 'Complete formula to paste into the <code>OnSelect</code> event of your import button.',
+                modalTitle: 'Excel Input (TSV)',
+                modalInfo: 'Paste content copied from Excel (header + some data rows). Expected separator is <code>TAB</code>.',
+                lblTextInput: 'TextInputExample',
+                btnAnalyze: 'Analyze and close',
+                btnClear: 'Clear',
+                lblColumns: 'Columns',
+                lblDataRows: 'Data rows',
+                feedbackText: 'Copied to clipboard',
+                jsonEmptyState: '// Import Excel data first',
+                formulaEmptyState: '// Import Excel data first to generate formula',
+                alertPasteData: 'Please paste Excel data',
+                alertCopyError: 'Copy error. Please select and copy manually.',
+                formulaHeader: 'Generated by Xl2Collection',
+                formulaHeaderLength: 'header length + 1',
+                formulaColumns: 'Columns',
+                formulaSelected: 'selected out of',
+                formulaUnpivotMode: 'UNPIVOT mode enabled for',
+                formulaKeyColumns: 'Key columns',
+                formulaReplaceInput: 'Replace input_data with your control or variable',
+                formulaNormalization: 'Normalize CR/LF and extract body (skip header)',
+                formulaLoadCollection: 'Load colData',
+                formulaUnpivotLoad: 'Load with UNPIVOT (flat rows)',
+            },
+            fr: {
+                headerSubtitle: 'Générateur de formules pour import Excel → Collection Power Apps',
+                btnImport: 'Importer Excel',
+                tabTable: 'Table',
+                emptyStateText: 'Cliquez sur "Importer Excel" pour commencer',
+                thChecked: 'Coché',
+                lblAttrName: 'Nom colonne attribut:',
+                lblValueName: 'Nom colonne valeur:',
+                unpivotAttrDefault: 'Attribut',
+                unpivotValueDefault: 'Valeur',
+                unpivotCount: (n) => `${n} colonne${n > 1 ? 's' : ''}`,
+                panelFormulaTitle: 'Formule Power FX Générée',
+                btnCopy: 'Copier',
+                infoFormula: 'Formule complète à coller dans l\'événement <code>OnSelect</code> de votre bouton d\'import.',
+                modalTitle: 'Entrée Excel (TSV)',
+                modalInfo: 'Collez le contenu copié depuis Excel (header + quelques lignes de données). Le séparateur attendu est <code>TAB</code>.',
+                lblTextInput: 'TextInputExemple',
+                btnAnalyze: 'Analyser et fermer',
+                btnClear: 'Effacer',
+                lblColumns: 'Colonnes',
+                lblDataRows: 'Lignes data',
+                feedbackText: 'Copié dans le presse-papier',
+                jsonEmptyState: '// Importez d\'abord des données Excel',
+                formulaEmptyState: '// Importez d\'abord des données Excel pour générer la formule',
+                alertPasteData: 'Veuillez coller des données Excel',
+                alertCopyError: 'Erreur lors de la copie. Veuillez sélectionner et copier manuellement.',
+                formulaHeader: 'Formule générée par Xl2Collection',
+                formulaHeaderLength: 'longueur du header + 1',
+                formulaColumns: 'Colonnes',
+                formulaSelected: 'sélectionnées sur',
+                formulaUnpivotMode: 'Mode UNPIVOT activé pour',
+                formulaKeyColumns: 'Colonnes clés',
+                formulaReplaceInput: 'Remplacez input_data par votre contrôle ou variable',
+                formulaNormalization: 'Normalisation CR/LF et extraction du body (skip header)',
+                formulaLoadCollection: 'Chargement de colData',
+                formulaUnpivotLoad: 'Chargement avec UNPIVOT (lignes plates)',
+            }
+        };
+
+        // Power FX Syntax configuration per language
+        const powerFXSyntax = {
+            en: {
+                listSeparator: ',',           // Function argument separator: f(a, b)
+                instructionSeparator: ';',    // Statement separator: a; b; c
+                decimalSeparator: '.',        // Decimal: 1.5
+            },
+            fr: {
+                listSeparator: ';',           // Function argument separator: f(a; b)
+                instructionSeparator: ';;',   // Statement separator: a;; b;; c
+                decimalSeparator: ',',        // Decimal: 1,5
+            }
+        };
+
         let colBootstrap = [];
         let varCutStart = 0;
         let headerCells = [];
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            document.documentElement.lang = lang;
+            
+            // Update language selector buttons
+            document.getElementById('langEN').classList.toggle('active', lang === 'en');
+            document.getElementById('langFR').classList.toggle('active', lang === 'fr');
+            
+            // Update all translatable elements
+            const t = translations[lang];
+            document.getElementById('headerSubtitle').textContent = t.headerSubtitle;
+            document.getElementById('btnImport').textContent = t.btnImport;
+            document.getElementById('tabTable').textContent = t.tabTable;
+            document.getElementById('emptyStateText').textContent = t.emptyStateText;
+            document.getElementById('thChecked').textContent = t.thChecked;
+            document.getElementById('lblAttrName').textContent = t.lblAttrName;
+            document.getElementById('lblValueName').textContent = t.lblValueName;
+            document.getElementById('panelFormulaTitle').textContent = t.panelFormulaTitle;
+            document.getElementById('btnCopy').textContent = t.btnCopy;
+            document.getElementById('infoFormula').innerHTML = t.infoFormula;
+            document.getElementById('modalTitle').textContent = t.modalTitle;
+            document.getElementById('modalInfo').innerHTML = t.modalInfo;
+            document.getElementById('lblTextInput').textContent = t.lblTextInput;
+            document.getElementById('btnAnalyze').textContent = t.btnAnalyze;
+            document.getElementById('btnClear').textContent = t.btnClear;
+            document.getElementById('lblColumns').textContent = t.lblColumns;
+            document.getElementById('lblDataRows').textContent = t.lblDataRows;
+            document.getElementById('feedbackText').textContent = t.feedbackText;
+            
+            // Update unpivot field defaults if not modified
+            const attrInput = document.getElementById('unpivotAttrName');
+            const valueInput = document.getElementById('unpivotValueName');
+            const oldT = translations[lang === 'en' ? 'fr' : 'en'];
+            
+            if (attrInput.value === oldT.unpivotAttrDefault) {
+                attrInput.value = t.unpivotAttrDefault;
+            }
+            if (valueInput.value === oldT.unpivotValueDefault) {
+                valueInput.value = t.unpivotValueDefault;
+            }
+            
+            // Update empty states
+            if (!colBootstrap.length) {
+                document.getElementById('jsonOutput').textContent = t.jsonEmptyState;
+                document.getElementById('formulaOutput').textContent = t.formulaEmptyState;
+            }
+            
+            // Regenerate formula if data exists
+            if (colBootstrap.length > 0) {
+                updateUnpivotSettings();
+                generateFormula();
+            }
+        }
 
         // Attacher l'événement copier au chargement
         document.addEventListener('DOMContentLoaded', function() {
@@ -1011,7 +1197,7 @@
         function analyzeData() {
             const input = document.getElementById('inputData').value;
             if (!input.trim()) {
-                alert('Veuillez coller des données Excel');
+                alert(translations[currentLanguage].alertPasteData);
                 return;
             }
             
@@ -1148,10 +1334,11 @@
             const unpivotCols = colBootstrap.filter(c => c.unpivot);
             const settingsDiv = document.getElementById('unpivotSettings');
             const countBadge = document.getElementById('unpivotCount');
+            const t = translations[currentLanguage];
             
             if (unpivotCols.length > 0) {
                 settingsDiv.classList.remove('hidden');
-                countBadge.textContent = `${unpivotCols.length} colonne${unpivotCols.length > 1 ? 's' : ''}`;
+                countBadge.textContent = t.unpivotCount(unpivotCols.length);
             } else {
                 settingsDiv.classList.add('hidden');
             }
@@ -1187,20 +1374,26 @@
             return `'${normalized.replace(/'/g, "''")}'`;
         }
 
-        function getValueExpr(dtype, cellIndexExpr) {
+        function getValueExpr(dtype, cellIndexExpr, syntax) {
+            const { listSeparator: ls } = syntax;
+            
             if (dtype === 'Text') {
-                return `Index(_cells; ${cellIndexExpr}).Value`;
+                return `Index(_cells${ls} ${cellIndexExpr}).Value`;
             } else if (dtype === 'Value') {
-                return `Value(Substitute(Index(_cells; ${cellIndexExpr}).Value; ","; "."))`;
+                return `Value(Index(_cells${ls} ${cellIndexExpr}).Value)`;
             } else if (dtype === 'DateValue') {
-                return `DateValue(Index(_cells; ${cellIndexExpr}).Value)`;
+                return `DateValue(Index(_cells${ls} ${cellIndexExpr}).Value)`;
             } else if (dtype === 'DateTimeValue') {
-                return `DateTimeValue(Index(_cells; ${cellIndexExpr}).Value)`;
+                return `DateTimeValue(Index(_cells${ls} ${cellIndexExpr}).Value)`;
             }
-            return `Index(_cells; ${cellIndexExpr}).Value`;
+            return `Index(_cells${ls} ${cellIndexExpr}).Value`;
         }
 
         function generateFormula() {
+            const syntax = powerFXSyntax[currentLanguage];
+            const { listSeparator: ls, instructionSeparator: is } = syntax;
+            const t = translations[currentLanguage];
+            
             const checkedCols = colBootstrap.filter(c => c.checked);
             const unpivotCols = checkedCols.filter(c => c.unpivot);
             const normalCols = checkedCols.filter(c => !c.unpivot);
@@ -1208,49 +1401,54 @@
             const hasUnpivot = unpivotCols.length > 0;
             
             // Récupérer les noms personnalisés pour attribut/valeur
-            const attrName = document.getElementById('unpivotAttrName')?.value || 'Attribut';
-            const valueName = document.getElementById('unpivotValueName')?.value || 'Valeur';
+            const attrName = document.getElementById('unpivotAttrName')?.value || t.unpivotAttrDefault;
+            const valueName = document.getElementById('unpivotValueName')?.value || t.unpivotValueDefault;
             
             let formula = '';
             
             // Commentaire d'en-tête
             formula += `// ═══════════════════════════════════════════════════════════════\n`;
-            formula += `// Formule générée par Power FX Maker Tool\n`;
-            formula += `// cutStart = ${varCutStart} (longueur du header + 1)\n`;
-            formula += `// Colonnes: ${checkedCols.length} sélectionnées sur ${colBootstrap.length}\n`;
+            formula += `// ${t.formulaHeader}\n`;
+            formula += `// cutStart = ${varCutStart} (${t.formulaHeaderLength})\n`;
+            formula += `// ${t.formulaColumns}: ${checkedCols.length} ${t.formulaSelected} ${colBootstrap.length}\n`;
             if (hasUnpivot) {
-                formula += `// Mode UNPIVOT activé pour: ${unpivotCols.map(c => normalizeHeaderForFormula(c.header)).join(', ')}\n`;
-                formula += `// Colonnes clés: ${normalCols.map(c => normalizeHeaderForFormula(c.header)).join(', ')}\n`;
+                formula += `// ${t.formulaUnpivotMode}: ${unpivotCols.map(c => normalizeHeaderForFormula(c.header)).join(', ')}\n`;
+                formula += `// ${t.formulaKeyColumns}: ${normalCols.map(c => normalizeHeaderForFormula(c.header)).join(', ')}\n`;
             }
             formula += `// ═══════════════════════════════════════════════════════════════\n\n`;
             
-            // Variables locales avec With
+            // With global pour faciliter le remplacement
             formula += `With(\n`;
             formula += `    {\n`;
-            formula += `        // Normalisation CR/LF et extraction du body (skip header)\n`;
-            formula += `        _txt: Mid(\n`;
-            formula += `            Substitute(Substitute(TextInputPaste.Text; Char(13) & Char(10); Char(10)); Char(13); Char(10));\n`;
-            formula += `            ${varCutStart}\n`;
-            formula += `        )\n`;
-            formula += `    };\n`;
+            formula += `        // ${t.formulaReplaceInput}\n`;
+            formula += `        input_data: TextInputPaste.Text\n`;
+            formula += `    }${ls}\n`;
+            formula += `    With(\n`;
+            formula += `        {\n`;
+            formula += `            // ${t.formulaNormalization}\n`;
+            formula += `            _txt: Mid(\n`;
+            formula += `                Substitute(Substitute(input_data${ls} Char(13) & Char(10)${ls} Char(10))${ls} Char(13)${ls} Char(10))${ls}\n`;
+            formula += `                ${varCutStart}\n`;
+            formula += `            )\n`;
+            formula += `        }${ls}\n`;
             
             if (!hasUnpivot) {
                 // Mode simple sans unpivot
-                formula += `    // Chargement de colData\n`;
+                formula += `    // ${t.formulaLoadCollection}\n`;
                 formula += `    ClearCollect(\n`;
-                formula += `        colData;\n`;
+                formula += `        colData${ls}\n`;
                 formula += `        ForAll(\n`;
-                formula += `            Filter(Split(_txt; Char(10)); !IsBlank(Value));\n`;
+                formula += `            Filter(Split(_txt${ls} Char(10))${ls} !IsBlank(Value))${ls}\n`;
                 formula += `            With(\n`;
-                formula += `                {_cells: Split(Value; Char(9))};\n`;
+                formula += `                {_cells: Split(Value${ls} Char(9))}${ls}\n`;
                 formula += `                {\n`;
                 
                 for (let i = 0; i < checkedCols.length; i++) {
                     const col = checkedCols[i];
                     const fieldName = escapeFieldName(col.header);
-                    const valueExpr = getValueExpr(col.dtype, col.id);
-                    const comma = i < checkedCols.length - 1 ? ';' : '';
-                    formula += `                    ${fieldName}: ${valueExpr}${comma}\n`;
+                    const valueExpr = getValueExpr(col.dtype, col.id, syntax);
+                    const separator = i < checkedCols.length - 1 ? ls : '';
+                    formula += `                    ${fieldName}: ${valueExpr}${separator}\n`;
                 }
                 
                 formula += `                }\n`;
@@ -1263,14 +1461,14 @@
                 // Mode avec unpivot - génère des lignes PLATES dans la collection
                 // Pour chaque ligne source, on génère N lignes (N = nombre de colonnes unpivot)
                 
-                formula += `    // Chargement avec UNPIVOT (lignes plates)\n`;
+                formula += `    // ${t.formulaUnpivotLoad}\n`;
                 formula += `    ClearCollect(\n`;
-                formula += `        colData;\n`;
+                formula += `        colData${ls}\n`;
                 formula += `        Ungroup(\n`;
                 formula += `            ForAll(\n`;
-                formula += `                Filter(Split(_txt; Char(10)); !IsBlank(Value));\n`;
+                formula += `                Filter(Split(_txt${ls} Char(10))${ls} !IsBlank(Value))${ls}\n`;
                 formula += `                With(\n`;
-                formula += `                    {_cells: Split(Value; Char(9))};\n`;
+                formula += `                    {_cells: Split(Value${ls} Char(9))}${ls}\n`;
                 formula += `                    {\n`;
                 formula += `                        _rows: Table(\n`;
                 
@@ -1278,30 +1476,30 @@
                 for (let i = 0; i < unpivotCols.length; i++) {
                     const col = unpivotCols[i];
                     const normalizedHeader = normalizeHeaderForFormula(col.header);
-                    const valueExpr = getValueExpr(col.dtype, col.id);
-                    const comma = i < unpivotCols.length - 1 ? ';' : '';
+                    const valueExpr = getValueExpr(col.dtype, col.id, syntax);
+                    const separator = i < unpivotCols.length - 1 ? ls : '';
                     
                     formula += `                            {\n`;
                     
                     // Colonnes clés (non-unpivot)
                     for (const keyCol of normalCols) {
                         const keyFieldName = escapeFieldName(keyCol.header);
-                        const keyValueExpr = getValueExpr(keyCol.dtype, keyCol.id);
-                        formula += `                                ${keyFieldName}: ${keyValueExpr};\n`;
+                        const keyValueExpr = getValueExpr(keyCol.dtype, keyCol.id, syntax);
+                        formula += `                                ${keyFieldName}: ${keyValueExpr}${ls}\n`;
                     }
                     
                     // Colonnes Attribut et Valeur
                     const attrFieldName = escapeFieldName(attrName);
                     const valueFieldName = escapeFieldName(valueName);
-                    formula += `                                ${attrFieldName}: "${normalizedHeader}";\n`;
+                    formula += `                                ${attrFieldName}: "${normalizedHeader}"${ls}\n`;
                     formula += `                                ${valueFieldName}: ${valueExpr}\n`;
-                    formula += `                            }${comma}\n`;
+                    formula += `                            }${separator}\n`;
                 }
                 
                 formula += `                        )\n`;
                 formula += `                    }\n`;
                 formula += `                )\n`;
-                formula += `            );\n`;
+                formula += `            )${ls}\n`;
                 formula += `            _rows\n`;
                 formula += `        )\n`;
                 formula += `    )\n`;
@@ -1340,7 +1538,7 @@
                 document.execCommand('copy');
                 showCopyFeedback();
             } catch (err) {
-                alert('Erreur lors de la copie. Veuillez sélectionner et copier manuellement.');
+                alert(translations[currentLanguage].alertCopyError);
             }
             
             document.body.removeChild(textArea);
@@ -1355,13 +1553,14 @@
         }
 
         function clearAll() {
+            const t = translations[currentLanguage];
             document.getElementById('inputData').value = '';
             document.getElementById('statsBar').style.display = 'none';
             document.getElementById('emptyState').style.display = 'block';
             document.getElementById('tableWrapper').style.display = 'none';
             document.getElementById('unpivotSettings').classList.add('hidden');
-            document.getElementById('jsonOutput').textContent = '// Importez d\'abord des données Excel';
-            document.getElementById('formulaOutput').textContent = '// Importez d\'abord des données Excel pour générer la formule';
+            document.getElementById('jsonOutput').textContent = t.jsonEmptyState;
+            document.getElementById('formulaOutput').textContent = t.formulaEmptyState;
             colBootstrap = [];
             varCutStart = 0;
             headerCells = [];
